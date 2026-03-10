@@ -823,9 +823,17 @@ function setupProfileModal() {
 
   document.querySelectorAll('.preset-btn').forEach(btn =>
     btn.addEventListener('click', () => {
-      const preset = ATHLETE_PRESETS[+btn.dataset.preset];
-      if (!preset) return;
-      fillProfileForm(preset);
+      const p = ATHLETE_PRESETS[+btn.dataset.preset];
+      if (!p) return;
+      document.getElementById('profile-goal-input').value    = p.calorieGoal;
+      document.getElementById('profile-protein-input').value = p.proteinGoal;
+      document.getElementById('profile-carbs-input').value   = p.carbsGoal;
+      document.getElementById('profile-fat-input').value     = p.fatGoal;
+      document.getElementById('profile-fiber-input').value   = p.fiberGoal;
+      state.profileFormGender = p.gender;
+      document.querySelectorAll('#profile-gender-toggle .gender-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.gender === p.gender)
+      );
       document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     })
