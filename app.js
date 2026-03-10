@@ -43,6 +43,7 @@ function deleteProfile(id) {
   // Clean up data
   localStorage.removeItem(pKey('nutriai-daily', id));
   localStorage.removeItem(pKey('nutriai-history', id));
+  localStorage.removeItem(pKey('nutriai-foodlog', id));
 }
 
 // Profile-scoped localStorage key
@@ -106,6 +107,7 @@ function addMealToDay(meal) {
     foods: meal.foods,
   });
   saveDailyLog(log);
+  appendToFoodLog(meal.foods);
 }
 function clearDayLog() { saveDailyLog({ date: todayKey(), meals: [] }); }
 
@@ -132,6 +134,30 @@ function autoSaveToHistory(log) {
   saveHistory(hist);
 }
 function saveTodayToHistory() { const log = getDailyLog(); if (log.date === todayKey()) autoSaveToHistory(log); }
+
+// =====================================================================
+// FOOD LOG  (profile-scoped, silent analytics database)
+// =====================================================================
+// Schema: [{ ts, date, food, grams, kcal, protein, carbs, fat, fiber }, ...]
+function getFoodLog()     { return JSON.parse(localStorage.getItem(pKey('nutriai-foodlog')) || '[]'); }
+function saveFoodLog(log) { localStorage.setItem(pKey('nutriai-foodlog'), JSON.stringify(log)); }
+
+function appendToFoodLog(foods) {
+  const log  = getFoodLog();
+  const ts   = Date.now();
+  const date = todayKey();
+  foods.forEach(f => log.push({
+    ts, date,
+    food:    f.name,
+    grams:   +(f.grams.toFixed(1)),
+    kcal:    +(f.kcal.toFixed(1)),
+    protein: +(f.protein.toFixed(2)),
+    carbs:   +(f.carbs.toFixed(2)),
+    fat:     +(f.fat.toFixed(2)),
+    fiber:   +(f.fiber.toFixed(2)),
+  }));
+  saveFoodLog(log);
+}
 
 function initDailyLog() {
   const log = getDailyLog();
@@ -163,6 +189,38 @@ Alle Werte sind absolute Mengen (nicht per 100g). Runde auf eine Dezimalstelle.`
   let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
   raw = raw.replace(/^```(?:json)?\n?/,'').replace(/\n?```$/,'').trim();
   return JSON.parse(raw);
+}
+
+// =====================================================================
+// DEFICIT DISPLAY
+// =====================================================================
+function renderDeficit() {
+  const totals  = getDailyTotals();
+  const targets = getTargets();
+  const wrap    = document.getElementById('deficit-wrap');
+
+  const items = [
+    { key:'kcal',    label:'Kalorien',      unit:'kcal', color:'var(--orange)', fmt: v => Math.round(v) },
+    { key:'protein', label:'Protein',       unit:'g',    color:'var(--blue)',   fmt: v => v.toFixed(1)  },
+    { key:'carbs',   label:'Kohlenhydrate', unit:'g',    color:'var(--green)',  fmt: v => v.toFixed(1)  },
+    { key:'fat',     label:'Fett',          unit:'g',    color:'var(--yellow)', fmt: v => v.toFixed(1)  },
+    { key:'fiber',   label:'Ballaststoffe', unit:'g',    color:'var(--purple)', fmt: v => v.toFixed(1)  },
+  ].map(item => {
+    const rem = targets[item.key].val - (totals[item.key] || 0);
+    return { ...item, rem };
+  }).filter(item => item.rem > 0);
+
+  if (!items.length) {
+    wrap.innerHTML = '<p class="deficit-done">Tagesziel erreicht!</p>';
+  } else {
+    wrap.innerHTML = `<p class="deficit-label">Noch offen</p>
+      <div class="deficit-pills">${items.map(item => `
+        <span class="deficit-pill" style="border-color:${item.color};color:${item.color}">
+          ${item.fmt(item.rem)} ${item.unit} ${item.label}
+        </span>`).join('')}
+      </div>`;
+  }
+  wrap.classList.remove('hidden');
 }
 
 // =====================================================================
@@ -241,7 +299,7 @@ function renderResults(data) {
 function renderToday() {
   const log = getDailyLog();
   if (log.date !== todayKey() || !log.meals.length) {
-    hide('today-section'); hide('divider-line'); return;
+    hide('today-section'); hide('divider-line'); hide('deficit-wrap'); return;
   }
   show('today-section'); show('divider-line');
 
@@ -265,6 +323,8 @@ function renderToday() {
       openMealEdit(log.meals[+el.dataset.i], { source:'today', mealIndex:+el.dataset.i })
     )
   );
+
+  renderDeficit();
 }
 
 // =====================================================================
