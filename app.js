@@ -772,12 +772,13 @@ function renderProfileList() {
 }
 
 function fillProfileForm(data) {
-  document.getElementById('profile-name-input').value   = data.name        || '';
-  document.getElementById('profile-goal-input').value   = data.calorieGoal || '';
-  document.getElementById('profile-protein-input').value= data.proteinGoal || '';
-  document.getElementById('profile-carbs-input').value  = data.carbsGoal   || '';
-  document.getElementById('profile-fat-input').value    = data.fatGoal     || '';
-  document.getElementById('profile-fiber-input').value  = data.fiberGoal   || '';
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val != null ? val : ''; };
+  set('profile-name-input',    data.name        ?? '');
+  set('profile-goal-input',    data.calorieGoal ?? '');
+  set('profile-protein-input', data.proteinGoal ?? '');
+  set('profile-carbs-input',   data.carbsGoal   ?? '');
+  set('profile-fat-input',     data.fatGoal     ?? '');
+  set('profile-fiber-input',   data.fiberGoal   ?? '');
   state.profileFormGender = data.gender || null;
   document.querySelectorAll('#profile-gender-toggle .gender-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.gender === state.profileFormGender)

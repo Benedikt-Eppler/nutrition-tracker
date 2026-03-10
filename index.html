@@ -10,7 +10,7 @@
 <div id="app">
 
   <header>
-    <h1>🥗 NutriAI <span id="version-tag">v1.2</span></h1>
+    <h1>🥗 NutriAI <span id="version-tag">v1.4</span></h1>
     <div class="header-actions">
       <button id="profile-btn" class="profile-avatar" title="Profil wechseln"></button>
       <button id="settings-btn" title="Einstellungen">⚙️</button>
@@ -102,14 +102,14 @@
       <label id="profile-form-label">Neues Profil</label>
       <label style="margin-top:10px">Vorlage <span class="hint-inline">(optional)</span></label>
       <div id="preset-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="preset-btn" data-preset="0">⚡ Hybrid</button>
-        <button class="preset-btn" data-preset="1">🏃 Running</button>
+        <button type="button" class="preset-btn" data-preset="0">⚡ Hybrid</button>
+        <button type="button" class="preset-btn" data-preset="1">🏃 Running</button>
       </div>
       <input type="text" id="profile-name-input" placeholder="Name" autocomplete="off">
       <label style="margin-top:14px">Geschlecht</label>
       <div class="gender-toggle" id="profile-gender-toggle">
-        <button class="gender-btn" data-gender="male">♂ Mann</button>
-        <button class="gender-btn" data-gender="female">♀ Frau</button>
+        <button type="button" class="gender-btn" data-gender="male">♂ Mann</button>
+        <button type="button" class="gender-btn" data-gender="female">♀ Frau</button>
       </div>
       <label style="margin-top:14px">Ziele <span class="hint-inline">(leer = Standard)</span></label>
       <div class="macro-goals-grid">
