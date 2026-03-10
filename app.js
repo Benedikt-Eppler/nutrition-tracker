@@ -199,9 +199,15 @@ async function analyzeFood(text) {
   const prompt = `
 Du bist ein Ernährungsexperte. Analysiere folgende Mahlzeit und berechne die Nährwerte.
 Mahlzeit: "${text}"
+
+Vorgehensweise für jedes Lebensmittel:
+1. Schlage die Nährwerte per 100g nach (aus offiziellen Quellen wie Bundeslebensmittelschlüssel)
+2. Skaliere linear auf die angegebene Grammzahl: Wert = (Wert_pro_100g / 100) * angegebene_Gramm
+3. Ballaststoffe (fiber) können NIE mehr als die Gesamtgrammzahl des Lebensmittels betragen
+
 Antworte NUR mit einem JSON-Objekt (kein Markdown, keine Erklärungen):
 {"label":"Kurzer Mahlzeit-Name","foods":[{"name":"Lebensmittelname","grams":100,"kcal":131,"protein":5.0,"carbs":25.0,"fat":1.0,"fiber":1.8}],"total":{"kcal":131,"protein":5.0,"carbs":25.0,"fat":1.0,"fiber":1.8}}
-Alle Werte sind absolute Mengen (nicht per 100g). Runde auf eine Dezimalstelle.`.trim();
+Alle Werte sind absolute Mengen für die angegebene Menge. Runde auf eine Dezimalstelle.`.trim();
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.apiKey}`,
@@ -212,7 +218,24 @@ Alle Werte sind absolute Mengen (nicht per 100g). Runde auf eine Dezimalstelle.`
   const data = await res.json();
   let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
   raw = raw.replace(/^```(?:json)?\n?/,'').replace(/\n?```$/,'').trim();
-  return JSON.parse(raw);
+  const result = JSON.parse(raw);
+  // Sanity check: fiber can never exceed total grams of the food
+  result.foods = result.foods.map(f => ({
+    ...f,
+    fiber: Math.min(f.fiber, f.grams),
+    kcal:  Math.max(0, f.kcal),
+    protein: Math.max(0, f.protein),
+    carbs:   Math.max(0, f.carbs),
+    fat:     Math.max(0, f.fat),
+  }));
+  result.total = result.foods.reduce((a, f) => ({
+    kcal:    a.kcal    + f.kcal,
+    protein: a.protein + f.protein,
+    carbs:   a.carbs   + f.carbs,
+    fat:     a.fat     + f.fat,
+    fiber:   a.fiber   + f.fiber,
+  }), { kcal:0, protein:0, carbs:0, fat:0, fiber:0 });
+  return result;
 }
 
 // =====================================================================
