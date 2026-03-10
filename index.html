@@ -10,7 +10,7 @@
 <div id="app">
 
   <header>
-    <h1>🥗 NutriAI</h1>
+    <h1>🥗 NutriAI <span id="version-tag">v1.2</span></h1>
     <div class="header-actions">
       <button id="profile-btn" class="profile-avatar" title="Profil wechseln"></button>
       <button id="settings-btn" title="Einstellungen">⚙️</button>
@@ -86,8 +86,6 @@
 
 </div>
 
-<span id="version-tag">v1.2</span>
-
 <!-- Profile Modal -->
 <div id="profile-modal" class="modal-overlay hidden">
   <div class="modal">
@@ -141,6 +139,10 @@
     <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off">
     <p class="hint">Lokal gespeichert, gilt für alle Profile.</p>
     <button id="save-key-btn" class="btn-primary">Speichern</button>
+    <div class="divider"></div>
+    <label>Daten exportieren</label>
+    <p class="hint" style="margin-bottom:10px">Food-Log des aktiven Profils als CSV — bereit für pandas / Excel.</p>
+    <button id="export-csv-btn" class="btn-secondary">⬇ Food-Log als CSV</button>
   </div>
 </div>
 

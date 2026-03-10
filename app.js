@@ -159,6 +159,30 @@ function appendToFoodLog(foods) {
   saveFoodLog(log);
 }
 
+function exportFoodLogCSV() {
+  const log     = getFoodLog();
+  const profile = getActiveProfile();
+  if (!log.length) { alert('Noch keine Daten zum Exportieren.'); return; }
+
+  const headers = ['timestamp','date','profile','food','grams','kcal','protein_g','carbs_g','fat_g','fiber_g'];
+  const rows = log.map(e => [
+    new Date(e.ts).toISOString(),
+    e.date,
+    profile?.name || '',
+    `"${(e.food || '').replace(/"/g, '""')}"`,
+    e.grams, e.kcal, e.protein, e.carbs, e.fat, e.fiber,
+  ].join(','));
+
+  const csv  = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `nutriai_foodlog_${profile?.name || 'export'}_${todayKey().replace(/\./g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function initDailyLog() {
   const log = getDailyLog();
   if (log.date !== todayKey() && log.meals.length) {
@@ -657,6 +681,7 @@ function setupModal() {
   document.getElementById('settings-btn').addEventListener('click', () => overlay.classList.remove('hidden'));
   document.getElementById('modal-close').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.getElementById('export-csv-btn').addEventListener('click', exportFoodLogCSV);
   document.getElementById('save-key-btn').addEventListener('click', () => {
     const key = apiInput.value.trim();
     if (key) {

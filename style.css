@@ -760,14 +760,15 @@ textarea::placeholder { color: var(--muted); }
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
 #version-tag {
-  position: fixed;
-  bottom: 10px;
-  right: 12px;
   font-size: 11px;
-  color: var(--border);
-  pointer-events: none;
-  user-select: none;
-  z-index: 1;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  vertical-align: middle;
+  letter-spacing: .02em;
 }
 
 /* ── Deficit ── */
