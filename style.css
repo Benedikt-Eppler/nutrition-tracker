@@ -759,6 +759,17 @@ textarea::placeholder { color: var(--muted); }
 .hint    { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
+#version-tag {
+  position: fixed;
+  bottom: 10px;
+  right: 12px;
+  font-size: 11px;
+  color: var(--border);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
 /* ── Deficit ── */
 #deficit-wrap { margin-top: 14px; }
 
