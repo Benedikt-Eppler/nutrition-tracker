@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>NutriAI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <h1>🥗 NutriAI</h1>
+    <div class="header-actions">
+      <button id="profile-btn" class="profile-avatar" title="Profil wechseln"></button>
+      <button id="settings-btn" title="Einstellungen">⚙️</button>
+    </div>
+  </header>
+
+  <!-- View Tabs -->
+  <div id="view-tabs">
+    <button class="view-tab active" data-view="today">Heute</button>
+    <button class="view-tab" data-view="history">Verlauf</button>
+  </div>
+
+  <!-- ════════ TODAY VIEW ════════ -->
+  <div id="view-today">
+    <section id="today-section" class="hidden">
+      <div id="today-header">
+        <div>
+          <span class="section-label">Heute</span>
+          <span id="today-meal-count"></span>
+        </div>
+        <button id="reset-day-btn" class="ghost-btn danger">Tag zurücksetzen</button>
+      </div>
+      <div id="today-rings"></div>
+      <div id="today-meal-list"></div>
+    </section>
+
+    <div id="divider-line" class="hidden"></div>
+
+    <section id="input-section">
+      <p class="input-hint">Was hast du gegessen?</p>
+      <div id="input-box">
+        <textarea id="food-input"
+          placeholder="z.B. 100g Spaghetti, 50g Sardellen, 2 EL Olivenöl …"
+          rows="3"></textarea>
+        <div id="input-actions">
+          <button id="mic-btn" title="Spracheingabe">🎙️</button>
+          <button id="analyze-btn">Analysieren</button>
+        </div>
+      </div>
+      <div id="mic-status" class="hidden">🔴 Höre zu …</div>
+    </section>
+
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <p>Analysiere Nährwerte …</p>
+    </div>
+    <div id="error-box" class="hidden"><p id="error-msg"></p></div>
+
+    <section id="results" class="hidden">
+      <div id="results-header">
+        <h2>Diese Mahlzeit</h2>
+        <button id="discard-btn" class="ghost-btn">✕ Verwerfen</button>
+      </div>
+      <div id="food-breakdown"></div>
+      <h3 class="section-label" style="margin-top:20px">Anteil Tagesbedarf</h3>
+      <div id="macro-bars"></div>
+      <button id="add-to-day-btn" class="btn-primary">+ Zum heutigen Tag hinzufügen</button>
+    </section>
+  </div>
+
+  <!-- ════════ HISTORY VIEW ════════ -->
+  <div id="view-history" class="hidden">
+    <div id="history-header">
+      <span class="section-label">Verlauf</span>
+      <div class="history-range-toggle">
+        <button class="range-btn active" data-range="7">7 Tage</button>
+        <button class="range-btn" data-range="30">30 Tage</button>
+      </div>
+    </div>
+    <div id="history-content"></div>
+  </div>
+
+</div>
+
+<!-- Profile Modal -->
+<div id="profile-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Profile</h3>
+      <button class="modal-close" id="profile-modal-close">✕</button>
+    </div>
+    <div id="profile-list"></div>
+    <button id="new-profile-btn" class="btn-secondary">+ Neues Profil anlegen</button>
+    <div id="profile-form" class="hidden">
+      <div class="divider"></div>
+      <label id="profile-form-label">Neues Profil</label>
+      <input type="text" id="profile-name-input" placeholder="Name" autocomplete="off">
+      <label style="margin-top:14px">Geschlecht</label>
+      <div class="gender-toggle" id="profile-gender-toggle">
+        <button class="gender-btn" data-gender="male">♂ Mann</button>
+        <button class="gender-btn" data-gender="female">♀ Frau</button>
+      </div>
+      <label style="margin-top:14px">Kalorienziel <span class="hint-inline">(leer = Standard)</span></label>
+      <input type="number" id="profile-goal-input" placeholder="2000" min="500" max="6000">
+      <div style="display:flex;gap:8px">
+        <button id="save-profile-btn" class="btn-primary" style="flex:1">Speichern</button>
+        <button id="cancel-profile-btn" class="btn-secondary" style="flex:0 0 auto;margin-top:10px">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Meal Edit Modal -->
+<div id="meal-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="meal-modal-title"></h3>
+        <span id="meal-modal-time" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <button class="modal-close" id="meal-modal-close">✕</button>
+    </div>
+    <div id="meal-modal-body"></div>
+  </div>
+</div>
+
+<!-- Settings Modal (API Key only) -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Einstellungen</h3>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <label>Gemini API Key</label>
+    <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off">
+    <p class="hint">Lokal gespeichert, gilt für alle Profile.</p>
+    <button id="save-key-btn" class="btn-primary">Speichern</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
