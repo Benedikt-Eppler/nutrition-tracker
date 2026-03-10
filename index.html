@@ -35,6 +35,7 @@
       </div>
       <div id="today-rings"></div>
       <div id="today-meal-list"></div>
+      <div id="adherence-wrap" class="hidden"></div>
       <div id="deficit-wrap" class="hidden"></div>
     </section>
 
@@ -81,6 +82,7 @@
         <button class="range-btn" data-range="30">30 Tage</button>
       </div>
     </div>
+    <div id="weekly-consistency" class="hidden"></div>
     <div id="history-content"></div>
   </div>
 
@@ -98,14 +100,25 @@
     <div id="profile-form" class="hidden">
       <div class="divider"></div>
       <label id="profile-form-label">Neues Profil</label>
+      <label style="margin-top:10px">Vorlage <span class="hint-inline">(optional)</span></label>
+      <div id="preset-btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="preset-btn" data-preset="0">⚡ Hybrid</button>
+        <button class="preset-btn" data-preset="1">🏃 Running</button>
+      </div>
       <input type="text" id="profile-name-input" placeholder="Name" autocomplete="off">
       <label style="margin-top:14px">Geschlecht</label>
       <div class="gender-toggle" id="profile-gender-toggle">
         <button class="gender-btn" data-gender="male">♂ Mann</button>
         <button class="gender-btn" data-gender="female">♀ Frau</button>
       </div>
-      <label style="margin-top:14px">Kalorienziel <span class="hint-inline">(leer = Standard)</span></label>
-      <input type="number" id="profile-goal-input" placeholder="2000" min="500" max="6000">
+      <label style="margin-top:14px">Ziele <span class="hint-inline">(leer = Standard)</span></label>
+      <div class="macro-goals-grid">
+        <div><span class="macro-goal-label" style="color:var(--orange)">Kalorien</span><input type="number" id="profile-goal-input" placeholder="2000" min="500" max="6000"><span class="macro-goal-unit">kcal</span></div>
+        <div><span class="macro-goal-label" style="color:var(--blue)">Protein</span><input type="number" id="profile-protein-input" placeholder="auto" min="10" max="500"><span class="macro-goal-unit">g</span></div>
+        <div><span class="macro-goal-label" style="color:var(--green)">Kohlenhydrate</span><input type="number" id="profile-carbs-input" placeholder="auto" min="10" max="1000"><span class="macro-goal-unit">g</span></div>
+        <div><span class="macro-goal-label" style="color:var(--yellow)">Fett</span><input type="number" id="profile-fat-input" placeholder="auto" min="10" max="300"><span class="macro-goal-unit">g</span></div>
+        <div><span class="macro-goal-label" style="color:var(--purple)">Ballaststoffe</span><input type="number" id="profile-fiber-input" placeholder="auto" min="5" max="100"><span class="macro-goal-unit">g</span></div>
+      </div>
       <div style="display:flex;gap:8px">
         <button id="save-profile-btn" class="btn-primary" style="flex:1">Speichern</button>
         <button id="cancel-profile-btn" class="btn-secondary" style="flex:0 0 auto;margin-top:10px">Abbrechen</button>

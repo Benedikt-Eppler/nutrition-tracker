@@ -21,10 +21,10 @@ function getActiveProfile() {
   return getProfiles()[getActiveProfileId()] || null;
 }
 
-function createProfile(name, gender, calorieGoal) {
+function createProfile(name, gender, calorieGoal, macros) {
   const id  = 'p_' + Date.now();
   const profiles = getProfiles();
-  profiles[id] = { id, name, gender, calorieGoal: calorieGoal || null };
+  profiles[id] = { id, name, gender, calorieGoal: calorieGoal || null, ...(macros || {}) };
   saveProfiles(profiles);
   return id;
 }
@@ -69,18 +69,24 @@ const GENDER_DEFAULTS = {
   female: { kcal: 2000, fiber: 25 },
 };
 
+const ATHLETE_PRESETS = [
+  { label: 'Hybrid',  gender: 'male', calorieGoal: 2800, proteinGoal: 165, carbsGoal: 355, fatGoal: 80, fiberGoal: 36 },
+  { label: 'Running',   gender: 'male', calorieGoal: 3050, proteinGoal: 160, carbsGoal: 420, fatGoal: 85, fiberGoal: 38 },
+];
+
 function getGender()    { return getActiveProfile()?.gender || null; }
 function getKcalGoal()  { return getActiveProfile()?.calorieGoal || GENDER_DEFAULTS[getGender()]?.kcal || 2000; }
 
 function getTargets() {
+  const p     = getActiveProfile();
   const kcal  = getKcalGoal();
-  const fiber = GENDER_DEFAULTS[getGender()]?.fiber ?? 25;
+  const fiber = p?.fiberGoal   ?? GENDER_DEFAULTS[getGender()]?.fiber ?? 25;
   return {
-    kcal:    { label: 'Kalorien',      val: kcal,                    unit: 'kcal', color: 'var(--orange)' },
-    protein: { label: 'Protein',       val: Math.round(kcal*0.20/4), unit: 'g',    color: 'var(--blue)'   },
-    carbs:   { label: 'Kohlenhydrate', val: Math.round(kcal*0.50/4), unit: 'g',    color: 'var(--green)'  },
-    fat:     { label: 'Fett',          val: Math.round(kcal*0.30/9), unit: 'g',    color: 'var(--yellow)' },
-    fiber:   { label: 'Ballaststoffe', val: fiber,                   unit: 'g',    color: 'var(--purple)' },
+    kcal:    { label: 'Kalorien',      val: kcal,                               unit: 'kcal', color: 'var(--orange)' },
+    protein: { label: 'Protein',       val: p?.proteinGoal ?? Math.round(kcal*0.20/4), unit: 'g',    color: 'var(--blue)'   },
+    carbs:   { label: 'Kohlenhydrate', val: p?.carbsGoal   ?? Math.round(kcal*0.50/4), unit: 'g',    color: 'var(--green)'  },
+    fat:     { label: 'Fett',          val: p?.fatGoal     ?? Math.round(kcal*0.30/9), unit: 'g',    color: 'var(--yellow)' },
+    fiber:   { label: 'Ballaststoffe', val: fiber,                               unit: 'g',    color: 'var(--purple)' },
   };
 }
 
@@ -239,6 +245,140 @@ Alle Werte sind absolute Mengen für die angegebene Menge. Runde auf eine Dezima
 }
 
 // =====================================================================
+// MACRO-ADHERENCE SCORE
+// =====================================================================
+const ADHERENCE_WEIGHTS = { kcal: 0.30, protein: 0.30, carbs: 0.20, fat: 0.10, fiber: 0.10 };
+
+function macroScore(actual, target) {
+  if (!target || !actual) return 0;
+  const r = actual / target;
+  return Math.min(r, 1 / r);
+}
+
+function computeAdherenceScore(totals, targets) {
+  let weighted = 0;
+  const breakdown = {};
+  for (const [key, weight] of Object.entries(ADHERENCE_WEIGHTS)) {
+    const s = macroScore(totals[key] || 0, targets[key].val);
+    breakdown[key] = Math.round(s * 100);
+    weighted += s * weight;
+  }
+  return { total: Math.round(weighted * 100), breakdown };
+}
+
+function renderAdherence() {
+  const totals  = getDailyTotals();
+  const targets = getTargets();
+  const { total, breakdown } = computeAdherenceScore(totals, targets);
+  const wrap  = document.getElementById('adherence-wrap');
+  const color = total >= 90 ? 'var(--green)' : total >= 70 ? 'var(--yellow)' : 'var(--red)';
+  const macros = [
+    { key: 'kcal',    label: 'Kalorien',     color: 'var(--orange)', weight: '30%' },
+    { key: 'protein', label: 'Protein',       color: 'var(--blue)',   weight: '30%' },
+    { key: 'carbs',   label: 'Kohlenhydrate', color: 'var(--green)',  weight: '20%' },
+    { key: 'fat',     label: 'Fett',          color: 'var(--yellow)', weight: '10%' },
+    { key: 'fiber',   label: 'Ballaststoffe', color: 'var(--purple)', weight: '10%' },
+  ];
+  wrap.innerHTML = `
+    <div class="adherence-card">
+      <div class="adherence-header">
+        <span class="adherence-title">Tages-Score</span>
+        <span class="adherence-total" style="color:${color}">${total} <span class="adherence-max">/ 100</span></span>
+      </div>
+      <div class="adherence-rows">
+        ${macros.map(m => {
+          const pct = breakdown[m.key];
+          const c   = pct >= 90 ? 'var(--green)' : pct >= 70 ? 'var(--yellow)' : 'var(--red)';
+          return `<div class="adherence-row">
+            <span class="adherence-macro-label" style="color:${m.color}">${m.label}</span>
+            <div class="adherence-bar-wrap">
+              <div class="adherence-bar" style="width:0%;background:${c}" data-target="${pct}"></div>
+            </div>
+            <span class="adherence-pct" style="color:${c}">${pct}%</span>
+            <span class="adherence-weight">${m.weight}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    wrap.querySelectorAll('.adherence-bar').forEach(b => { b.style.width = b.dataset.target + '%'; });
+  }));
+  wrap.classList.remove('hidden');
+}
+
+// =====================================================================
+// WEEKLY NUTRITION CONSISTENCY
+// =====================================================================
+function computeWeeklyConsistency() {
+  const hist    = getHistory();
+  const targets = getTargets();
+  const keys    = ['kcal', 'protein', 'carbs', 'fat', 'fiber'];
+  const sums    = Object.fromEntries(keys.map(k => [k, 0]));
+  let   days    = 0;
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const data = hist[d.toLocaleDateString('de-DE')];
+    if (!data) continue;
+    days++;
+    keys.forEach(k => { sums[k] += macroScore(data[k] || 0, targets[k].val); });
+  }
+
+  if (!days) return null;
+  const breakdown = Object.fromEntries(keys.map(k => [k, Math.round(sums[k] / days * 100)]));
+  const total = Math.round(
+    Object.entries(ADHERENCE_WEIGHTS).reduce((a, [k, w]) => a + (sums[k] / days) * w, 0) * 100
+  );
+  return { total, breakdown, days };
+}
+
+function renderWeeklyConsistency() {
+  const wrap = document.getElementById('weekly-consistency');
+  const result = computeWeeklyConsistency();
+
+  if (!result) { wrap.classList.add('hidden'); return; }
+
+  const { total, breakdown, days } = result;
+  const color = total >= 90 ? 'var(--green)' : total >= 70 ? 'var(--yellow)' : 'var(--red)';
+  const macros = [
+    { key: 'kcal',    label: 'Kalorien',     color: 'var(--orange)' },
+    { key: 'protein', label: 'Protein',       color: 'var(--blue)'   },
+    { key: 'carbs',   label: 'Kohlenhydrate', color: 'var(--green)'  },
+    { key: 'fat',     label: 'Fett',          color: 'var(--yellow)' },
+    { key: 'fiber',   label: 'Ballaststoffe', color: 'var(--purple)' },
+  ];
+
+  wrap.innerHTML = `
+    <div class="adherence-card" style="margin-bottom:16px">
+      <div class="adherence-header">
+        <div>
+          <span class="adherence-title">Wochenkonsistenz</span>
+          <span class="adherence-days">${days} von 7 Tagen</span>
+        </div>
+        <span class="adherence-total" style="color:${color}">${total} <span class="adherence-max">/ 100</span></span>
+      </div>
+      <div class="adherence-rows">
+        ${macros.map(m => {
+          const pct = breakdown[m.key];
+          const c   = pct >= 90 ? 'var(--green)' : pct >= 70 ? 'var(--yellow)' : 'var(--red)';
+          return `<div class="adherence-row">
+            <span class="adherence-macro-label" style="color:${m.color}">${m.label}</span>
+            <div class="adherence-bar-wrap">
+              <div class="adherence-bar" style="width:0%;background:${c}" data-target="${pct}"></div>
+            </div>
+            <span class="adherence-pct" style="color:${c}">${pct}%</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    wrap.querySelectorAll('.adherence-bar').forEach(b => { b.style.width = b.dataset.target + '%'; });
+  }));
+  wrap.classList.remove('hidden');
+}
+
+// =====================================================================
 // DEFICIT DISPLAY
 // =====================================================================
 function renderDeficit() {
@@ -371,6 +511,7 @@ function renderToday() {
     )
   );
 
+  renderAdherence();
   renderDeficit();
 }
 
@@ -381,6 +522,8 @@ function renderHistory() {
   const hist  = getHistory();
   const goal  = getKcalGoal();
   const range = state.historyRange;
+  if (range === 7) renderWeeklyConsistency();
+  else document.getElementById('weekly-consistency').classList.add('hidden');
   const days  = [];
   for (let i = range-1; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
@@ -628,27 +771,31 @@ function renderProfileList() {
   );
 }
 
+function fillProfileForm(data) {
+  document.getElementById('profile-name-input').value   = data.name        || '';
+  document.getElementById('profile-goal-input').value   = data.calorieGoal || '';
+  document.getElementById('profile-protein-input').value= data.proteinGoal || '';
+  document.getElementById('profile-carbs-input').value  = data.carbsGoal   || '';
+  document.getElementById('profile-fat-input').value    = data.fatGoal     || '';
+  document.getElementById('profile-fiber-input').value  = data.fiberGoal   || '';
+  state.profileFormGender = data.gender || null;
+  document.querySelectorAll('#profile-gender-toggle .gender-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.gender === state.profileFormGender)
+  );
+}
+
 function showProfileForm(mode, editId) {
   state.profileFormMode   = mode;
   state.profileFormId     = editId || null;
   state.profileFormGender = null;
 
-  const form = document.getElementById('profile-form');
   document.getElementById('profile-form-label').textContent = mode === 'edit' ? 'Profil bearbeiten' : 'Neues Profil';
-  document.getElementById('profile-name-input').value  = '';
-  document.getElementById('profile-goal-input').value  = '';
+  fillProfileForm({});
   document.querySelectorAll('#profile-gender-toggle .gender-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
 
-  if (mode === 'edit' && editId) {
-    const p = getProfiles()[editId];
-    document.getElementById('profile-name-input').value = p.name;
-    document.getElementById('profile-goal-input').value = p.calorieGoal || '';
-    state.profileFormGender = p.gender;
-    document.querySelectorAll('#profile-gender-toggle .gender-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.gender === p.gender)
-    );
-  }
-  form.classList.remove('hidden');
+  if (mode === 'edit' && editId) fillProfileForm(getProfiles()[editId]);
+  document.getElementById('profile-form').classList.remove('hidden');
 }
 
 function setupProfileModal() {
@@ -673,17 +820,33 @@ function setupProfileModal() {
     })
   );
 
+  document.querySelectorAll('.preset-btn').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const preset = ATHLETE_PRESETS[+btn.dataset.preset];
+      if (!preset) return;
+      fillProfileForm(preset);
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    })
+  );
+
   document.getElementById('save-profile-btn').addEventListener('click', () => {
     const name = document.getElementById('profile-name-input').value.trim();
     if (!name) { document.getElementById('profile-name-input').focus(); return; }
-    const goal   = parseInt(document.getElementById('profile-goal-input').value) || null;
+    const macros = {
+      calorieGoal: parseInt(document.getElementById('profile-goal-input').value)   || null,
+      proteinGoal: parseInt(document.getElementById('profile-protein-input').value) || null,
+      carbsGoal:   parseInt(document.getElementById('profile-carbs-input').value)   || null,
+      fatGoal:     parseInt(document.getElementById('profile-fat-input').value)     || null,
+      fiberGoal:   parseInt(document.getElementById('profile-fiber-input').value)   || null,
+    };
     const gender = state.profileFormGender;
 
     if (state.profileFormMode === 'create') {
-      const id = createProfile(name, gender, goal);
+      const id = createProfile(name, gender, macros.calorieGoal, macros);
       if (!getActiveProfileId()) { setActiveProfileId(id); initDailyLog(); }
     } else {
-      updateProfile(state.profileFormId, { name, gender, calorieGoal: goal });
+      updateProfile(state.profileFormId, { name, gender, ...macros });
     }
 
     renderProfileAvatar();

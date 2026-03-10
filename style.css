@@ -326,6 +326,51 @@ textarea::placeholder { color: var(--muted); }
 
 .hint-inline { font-size: 11px; color: var(--muted); font-weight: 400; }
 
+.preset-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.preset-btn:hover { border-color: var(--blue); color: var(--text); }
+.preset-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(88,166,255,.08); }
+
+.macro-goals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.macro-goals-grid > div { display: flex; flex-direction: column; gap: 3px; }
+.macro-goal-label { font-size: 11px; font-weight: 600; }
+.macro-goals-grid input { width: 100%; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+.macro-goal-unit { font-size: 11px; color: var(--muted); }
+
+/* ── Adherence Score ── */
+.adherence-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.adherence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.adherence-title { font-size: 13px; color: var(--muted); font-weight: 500; }
+.adherence-total { font-size: 26px; font-weight: 700; line-height: 1; }
+.adherence-max   { font-size: 14px; color: var(--muted); font-weight: 400; }
+.adherence-rows  { display: flex; flex-direction: column; gap: 7px; }
+.adherence-row   { display: grid; grid-template-columns: 100px 1fr 38px 28px; align-items: center; gap: 8px; }
+.adherence-macro-label { font-size: 12px; font-weight: 600; }
+.adherence-bar-wrap { background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; }
+.adherence-bar  { height: 100%; border-radius: 4px; transition: width .5s ease; }
+.adherence-pct  { font-size: 12px; font-weight: 600; text-align: right; }
+.adherence-weight { font-size: 10px; color: var(--muted); text-align: right; }
+.adherence-days   { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
 /* ── View Tabs ── */
 #view-tabs {
   display: flex;
